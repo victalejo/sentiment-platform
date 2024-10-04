@@ -1,33 +1,85 @@
 // src/pages/Dashboard.jsx
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
+import { Typography, Grid, Paper, CircularProgress } from '@mui/material';
+import { Box } from '@mui/system';
+import SentimentChart from '../components/charts/SentimentChart';
+import api from '../services/api';
 
 const Dashboard = () => {
-    const [data, setData] = useState([]);
+    const [summary, setSummary] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulación de llamada a API para obtener datos
-        fetch('https://api.example.com/data')
-            .then(response => response.json())
-            .then(data => setData(data))
-            .catch(error => console.error('Error fetching data:', error));
+        const fetchSummary = async () => {
+            try {
+                const response = await api.get('/sentimientos/resumen');
+                setSummary(response.data);
+            } catch (err) {
+                console.error('Error al obtener resumen de sentimientos', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSummary();
     }, []);
 
+    if (loading) {
+        return <CircularProgress />;
+    }
+
     return (
-        <div className="dashboard">
-            <h1>Dashboard</h1>
-            <div className="data-list">
-                {data.length ? (
-                    data.map((item, index) => (
-                        <div key={index} className="data-item">
-                            <h3>{item.title}</h3>
-                            <p>{item.description}</p>
-                        </div>
-                    ))
-                ) : (
-                    <p>Cargando datos...</p>
-                )}
-            </div>
-        </div>
+        <Box>
+            <Typography variant="h4" gutterBottom>
+                Resumen de Sentimientos
+            </Typography>
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Paper sx={{ p: 2 }}>
+                        <Typography variant="h6">Total de Mensajes</Typography>
+                        <Typography variant="h4">{summary.total_messages}</Typography>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Paper sx={{ p: 2 }}>
+                        <Typography variant="h6">Muy Positivo</Typography>
+                        <Typography variant="h4">{summary.very_positive}</Typography>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Paper sx={{ p: 2 }}>
+                        <Typography variant="h6">Positivo</Typography>
+                        <Typography variant="h4">{summary.positive}</Typography>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Paper sx={{ p: 2 }}>
+                        <Typography variant="h6">Neutral</Typography>
+                        <Typography variant="h4">{summary.neutral}</Typography>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Paper sx={{ p: 2 }}>
+                        <Typography variant="h6">Negativo</Typography>
+                        <Typography variant="h4">{summary.negative}</Typography>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <Paper sx={{ p: 2 }}>
+                        <Typography variant="h6">Muy Negativo</Typography>
+                        <Typography variant="h4">{summary.very_negative}</Typography>
+                    </Paper>
+                </Grid>
+            </Grid>
+
+            <Box sx={{ mt: 5 }}>
+                <Typography variant="h5" gutterBottom>
+                    Distribución de Sentimientos
+                </Typography>
+                <SentimentChart data={summary} />
+            </Box>
+        </Box>
     );
 };
 
