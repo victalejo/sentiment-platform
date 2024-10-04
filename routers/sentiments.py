@@ -1,6 +1,6 @@
 # routers/sentiments.py
 
-from fastapi import APIRouter, Query, Depends, HTTPException
+from fastapi import APIRouter, Query, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime
 
@@ -9,9 +9,13 @@ from models.database import get_db
 from utils.sentiment_analysis import analyze_sentiment
 from utils.helpers import is_base64
 from sqlalchemy.orm import Session
+from sqlalchemy import text  # Importar text para consultas SQL crudas
 from security.auth import get_current_user
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Sentimientos"],
+    prefix="/sentimientos"
+)
 
 @router.get("/", response_model=List[schemas.MensajeConSentimiento])
 def obtener_sentimientos(
@@ -30,25 +34,26 @@ def obtener_sentimientos(
 
     # Aplicación de filtros
     if agent_name:
-        sql += " AND agent_name = %s"
-        params.append(agent_name)
+        sql += " AND agent_name = :agent_name"
+        params.append({"agent_name": agent_name})
     if customer_name:
-        sql += " AND customer_name = %s"
-        params.append(customer_name)
+        sql += " AND customer_name = :customer_name"
+        params.append({"customer_name": customer_name})
     if channel:
-        sql += " AND channel = %s"
-        params.append(channel)
+        sql += " AND channel = :channel"
+        params.append({"channel": channel})
     if de:
-        sql += " AND de = %s"
-        params.append(de)
+        sql += " AND de = :de"
+        params.append({"de": de})
     if date_from:
-        sql += " AND date >= %s"
-        params.append(date_from)
+        sql += " AND date >= :date_from"
+        params.append({"date_from": date_from})
     if date_to:
-        sql += " AND date <= %s"
-        params.append(date_to)
+        sql += " AND date <= :date_to"
+        params.append({"date_to": date_to})
 
-    cursor = db.execute(sql, params)
+    # Ejecutar la consulta usando text()
+    cursor = db.execute(text(sql), {k: v for d in params for k, v in d.items()})
     resultados = cursor.fetchall()
 
     mensajes_con_sentimiento = []
@@ -97,25 +102,26 @@ def obtener_resumen_sentimientos(
 
     # Aplicación de filtros
     if agent_name:
-        sql += " AND agent_name = %s"
-        params.append(agent_name)
+        sql += " AND agent_name = :agent_name"
+        params.append({"agent_name": agent_name})
     if customer_name:
-        sql += " AND customer_name = %s"
-        params.append(customer_name)
+        sql += " AND customer_name = :customer_name"
+        params.append({"customer_name": customer_name})
     if channel:
-        sql += " AND channel = %s"
-        params.append(channel)
+        sql += " AND channel = :channel"
+        params.append({"channel": channel})
     if de:
-        sql += " AND de = %s"
-        params.append(de)
+        sql += " AND de = :de"
+        params.append({"de": de})
     if date_from:
-        sql += " AND date >= %s"
-        params.append(date_from)
+        sql += " AND date >= :date_from"
+        params.append({"date_from": date_from})
     if date_to:
-        sql += " AND date <= %s"
-        params.append(date_to)
+        sql += " AND date <= :date_to"
+        params.append({"date_to": date_to})
 
-    cursor = db.execute(sql, params)
+    # Ejecutar la consulta usando text()
+    cursor = db.execute(text(sql), {k: v for d in params for k, v in d.items()})
     resultados = cursor.fetchall()
 
     total_messages = 0

@@ -23,11 +23,11 @@ def get_user(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
 
-def authenticate_user(db: Session, username: str, password: str):
+def authenticate_user(db: Session, username: str, plain_password: str):
     user = get_user(db, username)
     if not user:
         return False
-    if not password.verify_password(password, user.hashed_password):
+    if not password.verify_password(plain_password, user.hashed_password):
         return False
     return user
 

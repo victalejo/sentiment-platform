@@ -9,6 +9,7 @@ from models.database import get_db
 from utils.sentiment_analysis import analyze_sentiment
 from utils.helpers import is_base64
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from security.auth import get_current_user
 
 router = APIRouter(
@@ -27,30 +28,29 @@ def obtener_chats(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    # Construcción de la consulta SQL con filtros
     sql = "SELECT * FROM conversaciones WHERE 1=1"
     params = []
 
     if agent_name:
-        sql += " AND agent_name = %s"
-        params.append(agent_name)
+        sql += " AND agent_name = :agent_name"
+        params.append({"agent_name": agent_name})
     if customer_name:
-        sql += " AND customer_name = %s"
-        params.append(customer_name)
+        sql += " AND customer_name = :customer_name"
+        params.append({"customer_name": customer_name})
     if channel:
-        sql += " AND channel = %s"
-        params.append(channel)
+        sql += " AND channel = :channel"
+        params.append({"channel": channel})
     if de:
-        sql += " AND de = %s"
-        params.append(de)
+        sql += " AND de = :de"
+        params.append({"de": de})
     if date_from:
-        sql += " AND date >= %s"
-        params.append(date_from)
+        sql += " AND date >= :date_from"
+        params.append({"date_from": date_from})
     if date_to:
-        sql += " AND date <= %s"
-        params.append(date_to)
+        sql += " AND date <= :date_to"
+        params.append({"date_to": date_to})
 
-    cursor = db.execute(sql, params)
+    cursor = db.execute(text(sql), {k: v for d in params for k, v in d.items()})
     resultados = cursor.fetchall()
 
     # Agrupar mensajes por conn_id
