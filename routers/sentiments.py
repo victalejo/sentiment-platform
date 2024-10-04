@@ -1,15 +1,19 @@
-from fastapi import APIRouter, Query, HTTPException
+# routers/sentiments.py
+
+from fastapi import APIRouter, Query, Depends, HTTPException
 from typing import List, Optional
 from datetime import datetime
 
-from models.schemas import MensajeConSentimiento, SentimentSummary
-from models.database import get_db_connection
+from models import schemas, models
+from models.database import get_db
 from utils.sentiment_analysis import analyze_sentiment
 from utils.helpers import is_base64
+from sqlalchemy.orm import Session
+from security.auth import get_current_user
 
 router = APIRouter()
 
-@router.get("/", response_model=List[MensajeConSentimiento])
+@router.get("/", response_model=List[schemas.MensajeConSentimiento])
 def obtener_sentimientos(
     agent_name: Optional[str] = Query(None, description="Nombre del agente"),
     customer_name: Optional[str] = Query(None, description="Nombre del cliente"),
@@ -17,10 +21,10 @@ def obtener_sentimientos(
     de: Optional[str] = Query(None, description="Remitente del mensaje"),
     date_from: Optional[datetime] = Query(None, description="Fecha inicial"),
     date_to: Optional[datetime] = Query(None, description="Fecha final"),
-    sentiment: Optional[str] = Query(None, description="Tipo de sentimiento: positivo, negativo, neutral, muy positivo, muy negativo")
+    sentiment: Optional[str] = Query(None, description="Tipo de sentimiento: muy positivo, positivo, neutral, negativo, muy negativo"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
-    mydb = get_db_connection()
-    cursor = mydb.cursor(dictionary=True)
     sql = "SELECT * FROM conversaciones WHERE 1=1"
     params = []
 
@@ -44,7 +48,7 @@ def obtener_sentimientos(
         sql += " AND date <= %s"
         params.append(date_to)
 
-    cursor.execute(sql, params)
+    cursor = db.execute(sql, params)
     resultados = cursor.fetchall()
 
     mensajes_con_sentimiento = []
@@ -59,7 +63,7 @@ def obtener_sentimientos(
         if sentiment and sentimiento != sentiment.lower():
             continue
 
-        mensaje_con_sentimiento = MensajeConSentimiento(
+        mensaje_con_sentimiento = schemas.MensajeConSentimiento(
             conn_id=mensaje['conn_id'],
             agent_name=mensaje['agent_name'],
             customer_name=mensaje['customer_name'],
@@ -75,20 +79,19 @@ def obtener_sentimientos(
         mensajes_con_sentimiento.append(mensaje_con_sentimiento)
 
     cursor.close()
-    mydb.close()
     return mensajes_con_sentimiento
 
-@router.get("/resumen", response_model=SentimentSummary)
+@router.get("/resumen", response_model=schemas.SentimentSummary)
 def obtener_resumen_sentimientos(
     agent_name: Optional[str] = Query(None, description="Nombre del agente"),
     customer_name: Optional[str] = Query(None, description="Nombre del cliente"),
     channel: Optional[str] = Query(None, description="Canal de comunicación"),
     de: Optional[str] = Query(None, description="Remitente del mensaje"),
     date_from: Optional[datetime] = Query(None, description="Fecha inicial"),
-    date_to: Optional[datetime] = Query(None, description="Fecha final")
+    date_to: Optional[datetime] = Query(None, description="Fecha final"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
-    mydb = get_db_connection()
-    cursor = mydb.cursor(dictionary=True)
     sql = "SELECT message FROM conversaciones WHERE 1=1"
     params = []
 
@@ -112,12 +115,12 @@ def obtener_resumen_sentimientos(
         sql += " AND date <= %s"
         params.append(date_to)
 
-    cursor.execute(sql, params)
+    cursor = db.execute(sql, params)
     resultados = cursor.fetchall()
 
     total_messages = 0
-    positive = 0
     very_positive = 0
+    positive = 0
     neutral = 0
     negative = 0
     very_negative = 0
@@ -140,7 +143,7 @@ def obtener_resumen_sentimientos(
         elif sentimiento == 'muy negativo':
             very_negative += 1
 
-    resumen = SentimentSummary(
+    resumen = schemas.SentimentSummary(
         total_messages=total_messages,
         very_positive=very_positive,
         positive=positive,
@@ -150,5 +153,4 @@ def obtener_resumen_sentimientos(
     )
 
     cursor.close()
-    mydb.close()
     return resumen

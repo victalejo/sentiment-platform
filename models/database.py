@@ -1,16 +1,25 @@
-import mysql.connector
-from mysql.connector import pooling
+# models/database.py
 
-# Crear un pool de conexiones para optimizar el rendimiento
-connection_pool = pooling.MySQLConnectionPool(
-    pool_name="mypool",
-    pool_size=10,
-    host="localhost",
-    user="root",
-    password="",
-    database="indu"
-)
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
-def get_db_connection():
-    return connection_pool.get_connection()
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+# Dependencia para obtener la sesión de la base de datos
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

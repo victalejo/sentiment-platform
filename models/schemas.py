@@ -1,6 +1,50 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import List
+from typing import List, Optional
+
+
+# Esquemas para Roles y Usuarios
+class RoleBase(BaseModel):
+    name: str
+
+class RoleCreate(RoleBase):
+    pass
+
+class Role(RoleBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class UserBase(BaseModel):
+    username: str
+    email: EmailStr
+
+class UserCreate(UserBase):
+    password: str
+    roles: List[str]  # Lista de nombres de roles
+
+class User(UserBase):
+    id: int
+    is_active: bool
+    roles: List[Role] = []
+
+    class Config:
+        from_attributes = True
+
+# Esquemas para Tokens
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+# Esquemas para Login
+class Login(BaseModel):
+    username: str
+    password: str
+
 
 # Modelo para los mensajes con sentimiento
 class MensajeConSentimiento(BaseModel):

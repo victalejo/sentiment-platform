@@ -1,28 +1,35 @@
-from fastapi import APIRouter, Query, HTTPException
+# routers/agents.py
+
+from fastapi import APIRouter, Query, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime
 
-from models.schemas import AgentConSentimiento, SentimentSummary
-from models.database import get_db_connection
+from models import schemas, models
+from models.database import get_db
 from utils.sentiment_analysis import analyze_sentiment
 from utils.helpers import is_base64
+from sqlalchemy.orm import Session
+from security.auth import get_current_user
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Agentes"],
+    prefix="/agents"
+)
 
-@router.get("/", response_model=List[AgentConSentimiento])
+@router.get("/", response_model=List[schemas.AgentConSentimiento])
 def obtener_agentes(
     customer_name: Optional[str] = Query(None, description="Nombre del cliente"),
     channel: Optional[str] = Query(None, description="Canal de comunicación"),
     de: Optional[str] = Query(None, description="Remitente del mensaje"),
     date_from: Optional[datetime] = Query(None, description="Fecha inicial"),
-    date_to: Optional[datetime] = Query(None, description="Fecha final")
+    date_to: Optional[datetime] = Query(None, description="Fecha final"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
-    mydb = get_db_connection()
-    cursor = mydb.cursor(dictionary=True)
+    # Construcción de la consulta SQL con filtros
     sql = "SELECT * FROM conversaciones WHERE 1=1"
     params = []
 
-    # Aplicación de filtros
     if customer_name:
         sql += " AND customer_name = %s"
         params.append(customer_name)
@@ -39,40 +46,40 @@ def obtener_agentes(
         sql += " AND date <= %s"
         params.append(date_to)
 
-    cursor.execute(sql, params)
+    cursor = db.execute(sql, params)
     resultados = cursor.fetchall()
 
     # Agrupar mensajes por agent_name
     agentes_dict = {}
     for mensaje in resultados:
-        agent = mensaje['agent_name']
-        texto = mensaje['message']
+        agent = mensaje.agent_name
+        texto = mensaje.message
         if is_base64(texto):
             continue  # Ignorar mensajes en base64
 
         if agent not in agentes_dict:
             agentes_dict[agent] = {
                 "agent_name": agent,
-                "customer_name": mensaje['customer_name'],
-                "channel": mensaje['channel'],
-                "de": mensaje['de'],
-                "from_name": mensaje['from_name'],
-                "to_name": mensaje['to_name'],
-                "date": mensaje['date'],
+                "customer_name": mensaje.customer_name,
+                "channel": mensaje.channel,
+                "de": mensaje.de,
+                "from_name": mensaje.from_name,
+                "to_name": mensaje.to_name,
+                "date": mensaje.date,
                 "messages": [],
                 "sentiment_scores": []
             }
 
         sentimiento, score = analyze_sentiment(texto)
-        mensaje_detalle = {
-            "message": texto,
-            "sentiment": sentimiento,
-            "sentiment_score": score,
-            "date": mensaje['date'],
-            "from_name": mensaje['from_name'],
-            "to_name": mensaje['to_name'],
-            "channel": mensaje['channel']
-        }
+        mensaje_detalle = schemas.MensajeAgenteDetalle(
+            message=texto,
+            sentiment=sentimiento,
+            sentiment_score=score,
+            date=mensaje.date,
+            from_name=mensaje.from_name,
+            to_name=mensaje.to_name,
+            channel=mensaje.channel
+        )
         agentes_dict[agent]["messages"].append(mensaje_detalle)
         agentes_dict[agent]["sentiment_scores"].append(score)
 
@@ -93,7 +100,7 @@ def obtener_agentes(
         else:
             sentimiento_global = 'neutral'
 
-        agente_con_sentimiento = AgentConSentimiento(
+        agente_con_sentimiento = schemas.AgentConSentimiento(
             agent_name=agente["agent_name"],
             customer_name=agente["customer_name"],
             channel=agente["channel"],
@@ -108,23 +115,21 @@ def obtener_agentes(
         agentes_con_sentimiento.append(agente_con_sentimiento)
 
     cursor.close()
-    mydb.close()
     return agentes_con_sentimiento
 
-@router.get("/resumen", response_model=SentimentSummary)
+@router.get("/resumen", response_model=schemas.SentimentSummary)
 def obtener_resumen_sentimientos_agentes(
     customer_name: Optional[str] = Query(None, description="Nombre del cliente"),
     channel: Optional[str] = Query(None, description="Canal de comunicación"),
     de: Optional[str] = Query(None, description="Remitente del mensaje"),
     date_from: Optional[datetime] = Query(None, description="Fecha inicial"),
-    date_to: Optional[datetime] = Query(None, description="Fecha final")
+    date_to: Optional[datetime] = Query(None, description="Fecha final"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
-    mydb = get_db_connection()
-    cursor = mydb.cursor(dictionary=True)
     sql = "SELECT message FROM conversaciones WHERE 1=1"
     params = []
 
-    # Aplicación de filtros
     if customer_name:
         sql += " AND customer_name = %s"
         params.append(customer_name)
@@ -141,7 +146,7 @@ def obtener_resumen_sentimientos_agentes(
         sql += " AND date <= %s"
         params.append(date_to)
 
-    cursor.execute(sql, params)
+    cursor = db.execute(sql, params)
     resultados = cursor.fetchall()
 
     total_messages = 0
@@ -152,7 +157,7 @@ def obtener_resumen_sentimientos_agentes(
     very_negative = 0
 
     for mensaje in resultados:
-        texto = mensaje['message']
+        texto = mensaje.message
         if is_base64(texto):
             continue  # Ignorar mensajes en base64
 
@@ -169,7 +174,7 @@ def obtener_resumen_sentimientos_agentes(
         elif sentimiento == 'muy negativo':
             very_negative += 1
 
-    resumen = SentimentSummary(
+    resumen = schemas.SentimentSummary(
         total_messages=total_messages,
         very_positive=very_positive,
         positive=positive,
@@ -179,5 +184,4 @@ def obtener_resumen_sentimientos_agentes(
     )
 
     cursor.close()
-    mydb.close()
     return resumen

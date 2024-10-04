@@ -12,3 +12,4 @@ def is_base64(s):
         return base64.b64encode(base64.b64decode(s_bytes)) == s_bytes
     except Exception:
         return False
+
