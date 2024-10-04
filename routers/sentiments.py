@@ -30,31 +30,34 @@ def obtener_sentimientos(
     current_user: models.User = Depends(get_current_user)
 ):
     sql = "SELECT * FROM conversaciones WHERE 1=1"
-    params = []
+    params = {}
 
     # Aplicación de filtros
     if agent_name:
         sql += " AND agent_name = :agent_name"
-        params.append({"agent_name": agent_name})
+        params["agent_name"] = agent_name
     if customer_name:
         sql += " AND customer_name = :customer_name"
-        params.append({"customer_name": customer_name})
+        params["customer_name"] = customer_name
     if channel:
         sql += " AND channel = :channel"
-        params.append({"channel": channel})
+        params["channel"] = channel
     if de:
         sql += " AND de = :de"
-        params.append({"de": de})
+        params["de"] = de
     if date_from:
         sql += " AND date >= :date_from"
-        params.append({"date_from": date_from})
+        params["date_from"] = date_from
     if date_to:
         sql += " AND date <= :date_to"
-        params.append({"date_to": date_to})
+        params["date_to"] = date_to
 
-    # Ejecutar la consulta usando text()
-    cursor = db.execute(text(sql), {k: v for d in params for k, v in d.items()})
-    resultados = cursor.fetchall()
+    # Ejecutar la consulta usando text() y mappings()
+    try:
+        cursor = db.execute(text(sql), params)
+        resultados = cursor.mappings().all()  # Obtener resultados como diccionarios
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al ejecutar la consulta: {str(e)}")
 
     mensajes_con_sentimiento = []
     for mensaje in resultados:
@@ -65,7 +68,7 @@ def obtener_sentimientos(
         sentimiento, sentiment_score = analyze_sentiment(texto)
 
         # Aplicar filtro de sentimiento si se especifica
-        if sentiment and sentimiento != sentiment.lower():
+        if sentiment and sentimiento.lower() != sentiment.lower():
             continue
 
         mensaje_con_sentimiento = schemas.MensajeConSentimiento(
@@ -98,31 +101,34 @@ def obtener_resumen_sentimientos(
     current_user: models.User = Depends(get_current_user)
 ):
     sql = "SELECT message FROM conversaciones WHERE 1=1"
-    params = []
+    params = {}
 
     # Aplicación de filtros
     if agent_name:
         sql += " AND agent_name = :agent_name"
-        params.append({"agent_name": agent_name})
+        params["agent_name"] = agent_name
     if customer_name:
         sql += " AND customer_name = :customer_name"
-        params.append({"customer_name": customer_name})
+        params["customer_name"] = customer_name
     if channel:
         sql += " AND channel = :channel"
-        params.append({"channel": channel})
+        params["channel"] = channel
     if de:
         sql += " AND de = :de"
-        params.append({"de": de})
+        params["de"] = de
     if date_from:
         sql += " AND date >= :date_from"
-        params.append({"date_from": date_from})
+        params["date_from"] = date_from
     if date_to:
         sql += " AND date <= :date_to"
-        params.append({"date_to": date_to})
+        params["date_to"] = date_to
 
-    # Ejecutar la consulta usando text()
-    cursor = db.execute(text(sql), {k: v for d in params for k, v in d.items()})
-    resultados = cursor.fetchall()
+    # Ejecutar la consulta usando text() y mappings()
+    try:
+        cursor = db.execute(text(sql), params)
+        resultados = cursor.mappings().all()  # Obtener resultados como diccionarios
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al ejecutar la consulta: {str(e)}")
 
     total_messages = 0
     very_positive = 0
@@ -138,15 +144,15 @@ def obtener_resumen_sentimientos(
 
         sentimiento, _ = analyze_sentiment(texto)
         total_messages += 1
-        if sentimiento == 'muy positivo':
+        if sentimiento.lower() == 'muy positivo':
             very_positive += 1
-        elif sentimiento == 'positivo':
+        elif sentimiento.lower() == 'positivo':
             positive += 1
-        elif sentimiento == 'neutral':
+        elif sentimiento.lower() == 'neutral':
             neutral += 1
-        elif sentimiento == 'negativo':
+        elif sentimiento.lower() == 'negativo':
             negative += 1
-        elif sentimiento == 'muy negativo':
+        elif sentimiento.lower() == 'muy negativo':
             very_negative += 1
 
     resumen = schemas.SentimentSummary(

@@ -1,30 +1,29 @@
 # routers/auth.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models import schemas, models
 from models.database import get_db
 from security import jwt, password
 from datetime import timedelta
-from typing import List
 from fastapi.security import OAuth2PasswordRequestForm
 from security.auth import get_current_user
-from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter(
     tags=["Autenticación"],
     prefix="/auth"
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_user(db: Session, identifier: str):
+    return db.query(models.User).options(joinedload(models.User.roles)).filter(
+        (models.User.username == identifier) |
+        (models.User.email == identifier)
+    ).first()
 
 
-def get_user(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
-
-
-def authenticate_user(db: Session, username: str, plain_password: str):
-    user = get_user(db, username)
+def authenticate_user(db: Session, identifier: str, plain_password: str):
+    user = get_user(db, identifier)
     if not user:
         return False
     if not password.verify_password(plain_password, user.hashed_password):
@@ -32,7 +31,7 @@ def authenticate_user(db: Session, username: str, plain_password: str):
     return user
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=schemas.TokenResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -45,7 +44,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = jwt.create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "user": user}
+
+
+@router.get("/me", response_model=schemas.User)
+def read_users_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
 
 
 @router.post("/users/", response_model=schemas.User)
@@ -56,7 +60,9 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db),
         raise HTTPException(status_code=403, detail="No tienes permisos para realizar esta acción")
 
     db_user = db.query(models.User).filter(
-        (models.User.username == user.username) | (models.User.email == user.email)).first()
+        (models.User.username == user.username) |
+        (models.User.email == user.email)
+    ).first()
     if db_user:
         raise HTTPException(status_code=400, detail="El usuario ya existe")
 
