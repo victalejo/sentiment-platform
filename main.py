@@ -13,7 +13,7 @@ app = FastAPI(title="API de Análisis de Sentimientos")
 # Configura CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],  # Puedes permitir más dominios agregándolos en esta lista
+    allow_origins=["*"],  # Puedes permitir más dominios agregándolos en esta lista
     allow_credentials=True,
     allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permitir todos los encabezados
