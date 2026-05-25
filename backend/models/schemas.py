@@ -123,3 +123,28 @@ class AgentConSentimiento(BaseModel):
     messages: List[MensajeAgenteDetalle]
     sentiment: str
     average_sentiment_score: float
+
+
+class SentimentHistoryBase(BaseModel):
+    text: str
+
+
+class SentimentHistoryCreate(SentimentHistoryBase):
+    pass
+
+
+class SentimentHistoryResponse(SentimentHistoryBase):
+    id: int
+    sentiment: str
+    sentiment_score: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SentimentHistoryListResponse(BaseModel):
+    items: List[SentimentHistoryResponse]
+    total: int
+    page: int
+    page_size: int
