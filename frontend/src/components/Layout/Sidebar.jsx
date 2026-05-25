@@ -6,6 +6,7 @@ import { Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar } from '@mu
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied';
+import HistoryIcon from '@mui/icons-material/History';
 import ChatIcon from '@mui/icons-material/Chat';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 
@@ -18,6 +19,7 @@ const Sidebar = () => {
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
         { text: 'Usuarios', icon: <PeopleIcon />, path: '/users' },
         { text: 'Sentimientos', icon: <SentimentSatisfiedIcon />, path: '/sentiments' },
+        { text: 'Historial', icon: <HistoryIcon />, path: '/history' },
         { text: 'Chats', icon: <ChatIcon />, path: '/chats' },
         { text: 'Agentes', icon: <AssignmentIcon />, path: '/agents' },
     ];
@@ -33,7 +35,7 @@ const Sidebar = () => {
         >
             <Toolbar />
             <List>
-                {menuItems.map((item, index) => (
+                {menuItems.map((item) => (
                     <ListItem
                         button
                         key={item.text}

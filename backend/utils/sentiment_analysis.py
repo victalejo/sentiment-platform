@@ -1,16 +1,25 @@
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
-# Descargar recursos necesarios para el análisis de sentimiento (ejecutar una vez)
-try:
-    nltk.data.find('sentiment/vader_lexicon.zip')
-except LookupError:
-    nltk.download('vader_lexicon')
+# El analizador se inicializa de forma perezosa (lazy): así, importar este
+# módulo no obliga a descargar el lexicón VADER ni a tener red disponible.
+# El recurso solo se descarga/carga la primera vez que se analiza un texto.
+_sid = None
 
-# Inicializar el analizador de sentimientos
-sid = SentimentIntensityAnalyzer()
+
+def _get_analyzer():
+    global _sid
+    if _sid is None:
+        try:
+            nltk.data.find('sentiment/vader_lexicon.zip')
+        except LookupError:
+            nltk.download('vader_lexicon')
+        _sid = SentimentIntensityAnalyzer()
+    return _sid
+
 
 def analyze_sentiment(texto):
+    sid = _get_analyzer()
     scores = sid.polarity_scores(texto)
     compound_score = scores['compound']
     if compound_score >= 0.5:

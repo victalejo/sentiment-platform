@@ -1,6 +1,8 @@
 # models/models.py
 
-from sqlalchemy import Column, Integer, String, Boolean, Table, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, Boolean, Table, ForeignKey, Text, Float, DateTime
 from sqlalchemy.orm import relationship
 from models.database import Base
 
@@ -36,3 +38,18 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email})>"
+
+
+class AnalisisHistorial(Base):
+    """Historial persistente de análisis de sentimiento realizados sobre texto libre."""
+    __tablename__ = 'analisis_historial'
+
+    id = Column(Integer, primary_key=True, index=True)
+    texto = Column(Text, nullable=False)
+    sentiment = Column(String(50), nullable=False)
+    sentiment_score = Column(Float, nullable=False)
+    created_by = Column(String(50), nullable=True)  # username que solicitó el análisis
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    def __repr__(self):
+        return f"<AnalisisHistorial(id={self.id}, sentiment={self.sentiment})>"

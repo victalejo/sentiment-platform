@@ -1,12 +1,16 @@
 # security/jwt.py
 
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from models.schemas import TokenData
 
-# Configuraciones para JWT
-SECRET_KEY = "TU_SECRETO_MUY_SEGURO"  # Debes almacenar esto en una variable de entorno
+# Configuraciones para JWT.
+# SECRET_KEY se lee de la variable de entorno SECRET_KEY; el valor por defecto
+# se mantiene como fallback para no romper entornos existentes, pero en
+# producción DEBE definirse mediante variable de entorno (ver .env.example).
+SECRET_KEY = os.getenv("SECRET_KEY", "TU_SECRETO_MUY_SEGURO")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
