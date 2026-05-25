@@ -1,7 +1,8 @@
 # models/models.py
 
-from sqlalchemy import Column, Integer, String, Boolean, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Table, ForeignKey, Float, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from models.database import Base
 
 # Tabla asociativa para la relación muchos a muchos entre usuarios y roles
@@ -36,3 +37,16 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email})>"
+
+
+class SentimentHistory(Base):
+    __tablename__ = 'sentiment_history'
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String(4000), nullable=False)
+    sentiment = Column(String(50), nullable=False)
+    sentiment_score = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<SentimentHistory(id={self.id}, sentiment={self.sentiment}, created_at={self.created_at})>"

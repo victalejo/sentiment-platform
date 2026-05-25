@@ -8,6 +8,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied';
 import ChatIcon from '@mui/icons-material/Chat';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import HistoryIcon from '@mui/icons-material/History';
 
 const drawerWidth = 240;
 
@@ -20,6 +21,7 @@ const Sidebar = () => {
         { text: 'Sentimientos', icon: <SentimentSatisfiedIcon />, path: '/sentiments' },
         { text: 'Chats', icon: <ChatIcon />, path: '/chats' },
         { text: 'Agentes', icon: <AssignmentIcon />, path: '/agents' },
+        { text: 'Historial', icon: <HistoryIcon />, path: '/history' },
     ];
 
     return (
