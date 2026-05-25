@@ -10,7 +10,7 @@
 
 ## Pull Request
 
-Se creará al publicar la rama: buscar en el repositorio `victalejo/sentiment-platform` el PR titulado **"[Auto/Cursor] Historial persistente de análisis de sentimiento"**.
+https://github.com/victalejo/sentiment-platform/pull/1
 
 ## Resumen de la mejora
 
