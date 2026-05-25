@@ -1,6 +1,6 @@
 # models/schemas.py
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 
@@ -123,3 +123,31 @@ class AgentConSentimiento(BaseModel):
     messages: List[MensajeAgenteDetalle]
     sentiment: str
     average_sentiment_score: float
+
+
+VALID_SENTIMENTS = frozenset({
+    'muy positivo', 'positivo', 'neutral', 'negativo', 'muy negativo'
+})
+
+
+class SentimentAnalysisCreate(BaseModel):
+    text: str = Field(..., min_length=1, max_length=10000)
+
+    @field_validator('text')
+    @classmethod
+    def text_not_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError('El texto no puede estar vacío')
+        return stripped
+
+
+class SentimentAnalysisHistoryItem(BaseModel):
+    id: int
+    text: str
+    sentiment: str
+    sentiment_score: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

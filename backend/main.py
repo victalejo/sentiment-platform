@@ -1,7 +1,7 @@
 # main.py
 
 from fastapi import FastAPI
-from routers import chats, agents, sentiments, auth, users
+from routers import chats, agents, sentiments, auth, users, historial
 from models.database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,6 +22,7 @@ app.add_middleware(
 # Incluir los routers
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(sentiments.router)  # Asegúrate de incluir este router
+app.include_router(sentiments.router)
+app.include_router(historial.router)
 app.include_router(chats.router)
 app.include_router(agents.router)
