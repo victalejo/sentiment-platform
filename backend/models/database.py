@@ -8,9 +8,13 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL') or 'sqlite:///./sentiment_platform.db'
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+_connect_args = {}
+if DATABASE_URL.startswith('sqlite'):
+    _connect_args['check_same_thread'] = False
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args=_connect_args)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
