@@ -1,6 +1,8 @@
 # models/models.py
 
-from sqlalchemy import Column, Integer, String, Boolean, Table, ForeignKey
+from datetime import datetime, timezone
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
 from models.database import Base
 
@@ -36,3 +38,24 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email})>"
+
+
+class SentimentAnalysisHistory(Base):
+    __tablename__ = 'sentiment_analysis_history'
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(Text, nullable=False)
+    sentiment = Column(String(50), nullable=False, index=True)
+    sentiment_score = Column(Float, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        index=True
+    )
+    created_by_user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+
+    created_by_user = relationship("User", backref="sentiment_analysis_history")
+
+    def __repr__(self):
+        return f"<SentimentAnalysisHistory(id={self.id}, sentiment={self.sentiment})>"

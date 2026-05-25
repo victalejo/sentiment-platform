@@ -14,7 +14,7 @@ const Layout = ({ children }) => {
             <Sidebar />
             <Box
                 component="main"
-                sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, marginLeft: `${drawerWidth}px` }}
+                sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, width: `calc(100% - ${drawerWidth}px)` }}
             >
                 <Toolbar />
                 {children}

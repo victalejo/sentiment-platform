@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from models import models
-from models.database import SessionLocal, engine
+from models.database import Base, SessionLocal, engine
 from security import password
 
 
@@ -43,6 +43,7 @@ def init_admin(db: Session):
 
 
 def main():
+    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
         init_roles(db)

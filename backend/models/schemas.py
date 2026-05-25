@@ -1,6 +1,6 @@
 # models/schemas.py
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 
@@ -76,6 +76,29 @@ class SentimentSummary(BaseModel):
     neutral: int
     negative: int
     very_negative: int
+
+
+class SentimentAnalysisCreate(BaseModel):
+    text: str = Field(..., min_length=1, max_length=5000)
+
+    @field_validator("text")
+    @classmethod
+    def text_must_not_be_blank(cls, value):
+        normalized_text = value.strip()
+        if not normalized_text:
+            raise ValueError("El texto no puede estar vacio")
+        return normalized_text
+
+
+class SentimentAnalysisHistory(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    text: str
+    sentiment: str
+    sentiment_score: float
+    created_at: datetime
+    created_by_user_id: Optional[int] = None
 
 
 class MensajeDetalle(BaseModel):
