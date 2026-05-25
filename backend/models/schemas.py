@@ -1,6 +1,6 @@
 # models/schemas.py
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 
@@ -76,6 +76,33 @@ class SentimentSummary(BaseModel):
     neutral: int
     negative: int
     very_negative: int
+
+
+# Esquemas para el Historial de Análisis de Sentimiento
+class AnalisisRequest(BaseModel):
+    """Cuerpo de la petición para analizar y persistir un texto."""
+    texto: str = Field(..., min_length=1, max_length=5000,
+                       description="Texto a analizar (1-5000 caracteres)")
+
+    @field_validator("texto")
+    @classmethod
+    def texto_no_vacio(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("El texto no puede estar vacío.")
+        return v.strip()
+
+
+class AnalisisHistorial(BaseModel):
+    """Representación de un análisis persistido."""
+    id: int
+    texto: str
+    sentiment: str
+    sentiment_score: float
+    created_by: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class MensajeDetalle(BaseModel):
