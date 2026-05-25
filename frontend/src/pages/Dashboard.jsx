@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx
 
 import React, { useEffect, useState } from 'react';
-import { Typography, Grid, Paper, CircularProgress } from '@mui/material';
+import { Alert, Typography, Grid, Paper, CircularProgress } from '@mui/material';
 import { Box } from '@mui/system';
 import SentimentChart from '../components/charts/SentimentChart';
 import api from '../services/api';
@@ -9,14 +9,17 @@ import api from '../services/api';
 const Dashboard = () => {
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchSummary = async () => {
+            setError('');
             try {
                 const response = await api.get('/sentimientos/resumen');
                 setSummary(response.data);
             } catch (err) {
                 console.error('Error al obtener resumen de sentimientos', err);
+                setError('No se pudo cargar el resumen de sentimientos.');
             } finally {
                 setLoading(false);
             }
@@ -27,6 +30,14 @@ const Dashboard = () => {
 
     if (loading) {
         return <CircularProgress />;
+    }
+
+    if (error) {
+        return <Alert severity="error">{error}</Alert>;
+    }
+
+    if (!summary) {
+        return <Alert severity="info">No hay resumen disponible.</Alert>;
     }
 
     return (

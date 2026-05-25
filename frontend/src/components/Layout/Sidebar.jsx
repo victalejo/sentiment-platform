@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar } from '@mui/material';
+import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied';
@@ -33,9 +33,8 @@ const Sidebar = () => {
         >
             <Toolbar />
             <List>
-                {menuItems.map((item, index) => (
-                    <ListItem
-                        button
+                {menuItems.map((item) => (
+                    <ListItemButton
                         key={item.text}
                         component={Link}
                         to={item.path}
@@ -45,7 +44,7 @@ const Sidebar = () => {
                             {item.icon}
                         </ListItemIcon>
                         <ListItemText primary={item.text} />
-                    </ListItem>
+                    </ListItemButton>
                 ))}
             </List>
         </Drawer>

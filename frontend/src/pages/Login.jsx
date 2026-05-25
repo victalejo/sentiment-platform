@@ -43,7 +43,7 @@ const Login = () => {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
             });
-            login(response.data.access_token);
+            login(response.data.access_token, response.data.user);
         } catch (err) {
             console.error('Error en login:', err);
             setError('Credenciales inválidas. Inténtalo de nuevo.');
