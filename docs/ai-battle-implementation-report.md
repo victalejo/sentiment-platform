@@ -10,7 +10,7 @@ GPT-5 Codex.
 
 ## Pull Request
 
-Pendiente de crear.
+https://github.com/victalejo/sentiment-platform/pull/4
 
 ## Resumen de la mejora
 
